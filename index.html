@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数码宝贝：数字大冒险（DDA v1.4）· 角色创建器</title>
+<script src="data.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --blue:#0f6fde; --blue-d:#0a4a9e; --blue-x:#062f66;
+  --bg1:#050d1f; --bg2:#0b1c3d;
+  --card:#0f2448; --card2:#122a55;
+  --line:#1d3f7a; --line2:#2a5aa8;
+  --txt:#dbe7ff; --txt-dim:#8fa8d8;
+  --acc:#29b6f6; --acc2:#00e5ff; --gold:#ffd54f; --red:#ff6d5f; --green:#5fe3a1;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(41,182,246,.18), transparent 60%),
+    radial-gradient(900px 500px at -10% 20%, rgba(0,229,255,.10), transparent 55%),
+    linear-gradient(160deg,var(--bg1),var(--bg2) 70%,#061229);
+  color:var(--txt); min-height:100vh; padding-bottom:60px;
+}
+/* 数字网格背景点缀 */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    linear-gradient(rgba(41,182,246,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(41,182,246,.05) 1px, transparent 1px);
+  background-size:42px 42px;
+}
+.wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:0 18px}
+
+/* ---------- Header ---------- */
+header{
+  padding:22px 0 14px; border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg, transparent, rgba(41,182,246,.08), transparent);
+}
+header .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{
+  width:52px;height:52px;border-radius:14px;flex:none;
+  background:linear-gradient(135deg,var(--blue),var(--acc2));
+  display:grid;place-items:center;font-size:26px;font-weight:800;color:#04101f;
+  box-shadow:0 0 24px rgba(41,182,246,.45);
+}
+h1{font-size:22px;line-height:1.2}
+h1 small{display:block;font-size:12px;color:var(--acc);font-weight:600;letter-spacing:2px}
+.sub{color:var(--txt-dim);font-size:12.5px;margin-top:3px}
+
+/* ---------- Tabs ---------- */
+.tabs{display:flex;gap:10px;margin:18px 0 6px}
+.tab{
+  flex:1; padding:14px 10px; border:1px solid var(--line2); border-radius:var(--r);
+  background:linear-gradient(160deg,var(--card2),var(--card));
+  color:var(--txt-dim); cursor:pointer; text-align:left; transition:.2s;
+  display:flex; align-items:center; gap:12px;
+}
+.tab:hover{border-color:var(--acc); transform:translateY(-1px)}
+.tab.active{
+  border-color:var(--acc); color:#fff;
+  background:linear-gradient(160deg, rgba(41,182,246,.22), rgba(15,111,222,.15));
+  box-shadow:0 6px 24px rgba(41,182,246,.22);
+}
+.tab .ti{font-size:26px}
+.tab b{font-size:16px;display:block}
+.tab span{font-size:12px;color:var(--txt-dim)}
+
+/* ---------- 布局 ---------- */
+.cols{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,1fr);gap:18px;margin-top:14px;align-items:start}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.card{
+  background:linear-gradient(170deg,rgba(18,42,85,.85),rgba(15,36,72,.9));
+  border:1px solid var(--line); border-radius:var(--r); padding:16px 18px; margin-bottom:14px;
+  box-shadow:0 8px 28px rgba(0,0,0,.35);
+}
+.card h3{
+  font-size:14.5px; color:var(--acc); letter-spacing:1px; margin-bottom:4px;
+  display:flex; align-items:center; gap:8px;
+}
+.card h3 .num{
+  width:22px;height:22px;border-radius:7px;background:var(--blue);color:#fff;
+  display:inline-grid;place-items:center;font-size:12px;flex:none;
+}
+.card .hint{font-size:11.5px;color:var(--txt-dim);margin-bottom:10px}
+.sticky{position:sticky;top:12px}
+
+/* ---------- 表单控件 ---------- */
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.field{flex:1;min-width:140px}
+.field label{display:block;font-size:11.5px;color:var(--txt-dim);margin-bottom:4px;letter-spacing:.5px}
+input[type=text],input[type=number],select,textarea{
+  width:100%; background:#081530; border:1px solid var(--line2); color:var(--txt);
+  border-radius:9px; padding:8px 10px; font-size:13.5px; outline:none; transition:.15s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--acc); box-shadow:0 0 0 3px rgba(41,182,246,.15)}
+textarea{resize:vertical;min-height:64px}
+input[type=number]{text-align:center}
+
+/* 战役等级选择 */
+.lvls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:720px){.lvls{grid-template-columns:1fr}}
+.lvl{
+  border:1px solid var(--line2); border-radius:12px; padding:12px; cursor:pointer; transition:.15s; position:relative;
+  background:rgba(8,21,48,.6);
+}
+.lvl:hover{border-color:var(--acc)}
+.lvl.sel{border-color:var(--acc); background:rgba(41,182,246,.14); box-shadow:0 0 0 3px rgba(41,182,246,.18)}
+.lvl b{display:block;font-size:14px;margin-bottom:6px}
+.lvl .kv{display:flex;justify-content:space-between;font-size:12px;color:var(--txt-dim);padding:2px 0}
+
+/* 属性 / 技能分配 */
+.stat-block{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:rgba(8,21,48,.45)}
+.stat-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.stat-head b{font-size:14px}
+.stat-head .cost{font-size:12px;color:var(--txt-dim)}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper button{
+  width:28px;height:28px;border-radius:8px;border:1px solid var(--line2);background:var(--card2);
+  color:var(--acc);font-size:16px;cursor:pointer;line-height:1;transition:.12s;
+}
+.stepper button:hover{background:var(--blue);color:#fff}
+.stepper button:disabled{opacity:.35;cursor:not-allowed}
+.stepper .val{min-width:30px;text-align:center;font-weight:700;font-size:15px}
+.skills{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:640px){.skills{grid-template-columns:1fr}}
+.skill{
+  display:flex;justify-content:space-between;align-items:center;gap:6px;
+  background:#081530;border:1px solid var(--line);border-radius:9px;padding:6px 8px;
+}
+.skill .n{font-size:12.5px}
+.skill .stepper button{width:24px;height:24px;font-size:14px}
+
+/* 摘要 */
+.summary{background:linear-gradient(170deg,rgba(18,42,85,.95),rgba(10,26,58,.95))}
+.sum-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.sum-item:last-child{border-bottom:none}
+.sum-item .lbl{color:var(--txt-dim)}
+.sum-item .val{font-weight:700}
+.sum-item .val.good{color:var(--green)} .sum-item .val.bad{color:var(--red)} .sum-item .val.warn{color:var(--gold)}
+.cp-bar{height:10px;border-radius:6px;background:#081530;overflow:hidden;margin:8px 0 4px;border:1px solid var(--line)}
+.cp-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--acc2));transition:.25s}
+.derived{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+@media(max-width:640px){.derived{grid-template-columns:repeat(2,1fr)}}
+.dcell{
+  background:#081530;border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;
+}
+.dcell .dn{font-size:11px;color:var(--txt-dim)}
+.dcell .dv{font-size:19px;font-weight:800;color:var(--acc2);margin-top:2px}
+.dcell.spec .dv{color:var(--gold)}
+
+/* 折磨 */
+.torment{display:flex;gap:8px;align-items:flex-start;background:#081530;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;flex-wrap:wrap}
+.torment .grow{flex:1;min-width:200px}
+.torment input[type=text]{margin-top:6px}
+.boxes{display:flex;gap:3px;flex-wrap:wrap;margin-top:8px}
+.boxes i{
+  width:20px;height:20px;border-radius:5px;border:1.5px solid var(--line2);cursor:pointer;transition:.12s;
+  display:grid;place-items:center;font-size:11px;font-style:normal;color:transparent;
+}
+.boxes i.on{background:var(--red);border-color:var(--red);color:#fff}
+.boxes i:hover{border-color:var(--acc)}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;margin-right:6px}
+.tag.minor{background:rgba(255,213,79,.15);color:var(--gold);border:1px solid rgba(255,213,79,.4)}
+.tag.major{background:rgba(255,109,95,.15);color:var(--red);border:1px solid rgba(255,109,95,.4)}
+.tag.terrible{background:rgba(180,80,255,.15);color:#c79bff;border:1px solid rgba(180,80,255,.4)}
+
+/* 特质 */
+.qgroup{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.qg-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:10px 12px;background:rgba(41,182,246,.07);cursor:pointer;user-select:none;
+}
+.qg-head b{font-size:13px;color:var(--acc)}
+.qg-head span{font-size:11px;color:var(--txt-dim)}
+.qg-body{display:none;padding:8px 12px 12px;background:rgba(8,21,48,.35)}
+.qgroup.open .qg-body{display:block}
+.quality{
+  display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);align-items:flex-start;
+}
+.quality:last-child{border-bottom:none}
+.quality .chk{flex:none;margin-top:3px;width:17px;height:17px;accent-color:var(--acc)}
+.quality .info{flex:1;min-width:0}
+.quality .qname{font-size:13px;font-weight:600}
+.quality .qname .dp{color:var(--gold);font-weight:700;margin-left:6px}
+.quality .qname .dp.neg{color:var(--green)}
+.quality .qdesc{font-size:11.5px;color:var(--txt-dim);margin-top:3px;line-height:1.55}
+.quality .qmeta{font-size:10.5px;color:var(--acc);margin-top:3px}
+.quality .qmeta .bad{color:var(--red)}
+.quality .qmeta .ok{color:var(--green)}
+.rankbox{display:flex;align-items:center;gap:6px;flex:none}
+.rankbox .stepper button{width:22px;height:22px;font-size:13px}
+.rankbox .rv{min-width:18px;text-align:center;font-weight:700;font-size:13px}
+
+/* 攻击编辑 */
+.attack{background:#081530;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.attack .ahead{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.attack input[type=text]{flex:1}
+.attack .tags{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;
+  background:rgba(41,182,246,.1);border:1px solid rgba(41,182,246,.35);cursor:pointer;user-select:none;transition:.12s;
+}
+.chip input{display:none}
+.chip.on{background:rgba(41,182,246,.35);border-color:var(--acc);color:#fff}
+.chip.dis{opacity:.35;cursor:not-allowed}
+.chip .eff{color:var(--gold)}
+
+/* 按钮 */
+.btn{
+  border:none;border-radius:10px;padding:10px 16px;font-size:13.5px;font-weight:700;cursor:pointer;
+  transition:.15s; display:inline-flex;align-items:center;gap:8px;
+}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--acc2));color:#04101f}
+.btn-ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line2)}
+.btn-danger{background:rgba(255,109,95,.15);color:var(--red);border:1px solid rgba(255,109,95,.4)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:8px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.export-bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.hidden{display:none!important}
+.note{font-size:11px;color:var(--txt-dim);margin-top:6px;line-height:1.5}
+.err{color:var(--red);font-size:12px;margin-top:6px}
+.okmsg{color:var(--green);font-size:12px;margin-top:6px}
+
+/* ============ 打印样式：打印 / 另存为 PDF ============ */
+@media print{
+  @page{size:A4;margin:12mm}
+  html,body{background:#fff !important;color:#123 !important}
+  body{padding:0}
+  body::before{display:none}
+  header,.tabs,.toolbar,.export-bar,.btn,#export-msg{display:none !important}
+  .sticky{position:static !important}
+  .wrap{max-width:100%;padding:0}
+  .cols{display:block}
+  .card{
+    background:#fff !important;border:none !important;box-shadow:none !important;
+    padding:0 !important;margin:0 0 6mm !important;page-break-inside:auto;
+  }
+  .card h3,.card .hint{color:#0a4a9e !important}
+  .card h3 .num{background:#0f6fde}
+  .hidden{display:block !important}
+  #sec-digimon,#sec-human{display:block !important;page-break-before:always}
+  #sec-human{page-break-before:auto}
+  input,select,textarea{border:none !important;background:transparent !important;padding:0 !important;color:#123 !important}
+  textarea{resize:none;overflow:hidden}
+  .stat-block,.skill,.torment,.attack,.qgroup{border:1px solid #c9d8f0 !important;background:#fbfdff !important;page-break-inside:avoid}
+  .stepper button{display:none !important}
+  .stepper .val{min-width:auto}
+  .lvls,.stat-block{page-break-inside:avoid}
+  .lvl{border:1px solid #c9d8f0;background:#fbfdff}
+  .qg-body{display:block !important}
+  .quality{border-bottom:1px dashed #d5e3f8}
+  .quality .chk,.rankbox .stepper button{display:none !important}
+  .quality{page-break-inside:avoid}
+  .boxes i{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .tag,.chip,.dcell,.cp-bar i{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .dcell{background:#f2f7ff !important;border:1px solid #d5e3f8}
+  .dcell .dv{color:#0f6fde}
+  .dcell.spec .dv{color:#c9a227}
+  .summary{page-break-before:always}
+  .derived{grid-template-columns:repeat(4,1fr)}
+  .qgroup{margin-bottom:4mm}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="logo">D</div>
+    <div>
+      <h1>数码宝贝：数字大冒险 <small>DIGIMON: DIGITAL ADVENTURES · v1.4</small></h1>
+      <div class="sub">角色创建器 — 人类 & 数码兽（数据源：《DDA v1.4 中文版》规则书）</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" id="tab-human" onclick="switchTab('human')">
+      <div class="ti">🧑</div>
+      <div><b>人类角色</b><span>属性 · 技能 · 特别指令 · 折磨 · 面向</span></div>
+    </div>
+    <div class="tab" id="tab-digimon" onclick="switchTab('digimon')">
+      <div class="ti">🐉</div>
+      <div><b>数码兽角色</b><span>属性 · 特质 · 攻击 · 衍生属性 · 特化值</span></div>
+    </div>
+  </div>
+
+  <!-- ================= 人类 ================= -->
+  <div id="sec-human">
+    <div class="cols">
+      <div>
+        <!-- 战役等级 -->
+        <div class="card">
+          <h3><span class="num">1</span> 战役等级 Campaign Level</h3>
+          <div class="hint">决定起始创建点（CP）、属性/技能上限与年龄范围。最终上限为硬性上限，之后花费经验也不能超过。</div>
+          <div class="lvls" id="lvl-select"></div>
+        </div>
+
+        <!-- 基本信息 -->
+        <div class="card">
+          <h3><span class="num">2</span> 基本信息</h3>
+          <div class="row">
+            <div class="field"><label>姓名</label><input type="text" id="h-name" placeholder="例：日菜"></div>
+            <div class="field"><label>性别</label><input type="text" id="h-gender" placeholder="女 / 男"></div>
+            <div class="field"><label>年龄</label><input type="text" id="h-age" placeholder="例：14"></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>数码兽搭档</label><input type="text" id="h-partner" placeholder="例：多拉兽 Dracomon"></div>
+          </div>
+          <div class="field"><label>角色简介 / 背景</label><textarea id="h-bio" placeholder="外貌、家庭、爱好、害怕的事、随身物品……（2.07 节提问可帮助构思）"></textarea></div>
+        </div>
+
+        <!-- 属性 -->
+        <div class="card">
+          <h3><span class="num">3</span> 属性分配 <span style="font-weight:400;font-size:12px;color:var(--txt-dim)">（1 CP = 1 点；只有一个属性可达到起始上限）</span></h3>
+          <div id="h-stats"></div>
+          <div id="h-stat-err" class="err"></div>
+        </div>
+
+        <!-- 技能 -->
+        <div class="card">
+          <h3><span class="num">4</span> 技能分配 <span style="font-weight:400;font-size:12px;color:var(--txt-dim)">（只有一个技能可达到起始上限；为 0 的技能在检定时获得 -1 修正）</span></h3>
+          <div id="h-skills"></div>
+          <div id="h-skill-err" class="err"></div>
+        </div>
+
+        <!-- 折磨 -->
+        <div class="card">
+          <h3><span class="num">5</span> 折磨 Torments</h3>
+          <div class="hint">所有角色以两个轻微折磨或一个严重折磨开始（GM 可要求更多）。创建时可用 CP 1:1 划掉折磨格（轻微最多 2 格 / 严重 3 格 / 可怕 4 格），但不能全部划掉。</div>
+          <div id="h-torments"></div>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="btn btn-ghost btn-sm" onclick="addTorment('minor')">＋ 轻微折磨</button>
+            <button class="btn btn-ghost btn-sm" onclick="addTorment('major')">＋ 严重折磨</button>
+            <button class="btn btn-ghost btn-sm" onclick="addTorment('terrible')">＋ 可怕折磨</button>
+          </div>
+          <div class="note">划掉折磨格的花费计入总 CP 消耗。</div>
+        </div>
+
+        <!-- 面向 -->
+        <div class="card">
+          <h3><span class="num">6</span> 面向 Aspects</h3>
+          <div class="hint">主要面向（+/-4）：性格中最突出的部分，每叙事日可触发一次；次要面向（+/-2）：更微妙的部分，可触发两次。一次检定不能激活超过一个面向。</div>
+          <div class="row">
+            <div class="field"><label>主要面向（+/-4）</label><input type="text" id="h-aspect-major" placeholder="例：直截了当"></div>
+          </div>
+          <div class="field"><label>主要面向描述</label><textarea id="h-aspect-major-desc" placeholder="这个面向如何体现角色性格？在什么情况下有益/有害？"></textarea></div>
+          <div class="row" style="margin-top:10px">
+            <div class="field"><label>次要面向（+/-2）</label><input type="text" id="h-aspect-minor" placeholder="例：甜美性情"></div>
+          </div>
+          <div class="field"><label>次要面向描述</label><textarea id="h-aspect-minor-desc" placeholder="这个面向如何体现角色性格？在什么情况下有益/有害？"></textarea></div>
+        </div>
+      </div>
+
+      <!-- 人类摘要 -->
+      <div>
+        <div class="card summary sticky">
+          <h3>📋 角色摘要</h3>
+          <div class="cp-bar"><i id="h-cp-fill" style="width:0%"></i></div>
+          <div class="sum-item"><span class="lbl">创建点 CP（剩余/总）</span><span class="val" id="h-cp-left">0 / 30</span></div>
+          <div class="sum-item"><span class="lbl">属性投入</span><span class="val" id="h-attr-spent">0</span></div>
+          <div class="sum-item"><span class="lbl">技能投入</span><span class="val" id="h-skill-spent">0</span></div>
+          <div class="sum-item"><span class="lbl">折磨划掉花费</span><span class="val" id="h-torment-spent">0</span></div>
+          <div class="sum-item"><span class="lbl">灵感（最大 = 意志力，≥1；创建时 1 点免费）</span><span class="val" id="h-insp">1 / 0</span></div>
+          <div style="font-size:13px;color:var(--acc);margin-top:12px;font-weight:700">衍生属性</div>
+          <div class="derived">
+            <div class="dcell"><div class="dn">伤口格</div><div class="dv" id="h-d-wound">0</div></div>
+            <div class="dcell"><div class="dn">速度/移动</div><div class="dv" id="h-d-speed">0</div></div>
+            <div class="dcell"><div class="dn">精准池</div><div class="dv" id="h-d-acc">0</div></div>
+            <div class="dcell"><div class="dn">闪避池</div><div class="dv" id="h-d-dodge">0</div></div>
+            <div class="dcell"><div class="dn">护甲</div><div class="dv" id="h-d-armor">0</div></div>
+            <div class="dcell"><div class="dn">伤害</div><div class="dv" id="h-d-dmg">0</div></div>
+          </div>
+          <div style="font-size:13px;color:var(--acc);margin-top:14px;font-weight:700">已解锁特别指令</div>
+          <div id="h-orders" style="font-size:12px;color:var(--txt-dim);margin-top:4px;line-height:1.8">-</div>
+          <div style="font-size:13px;color:var(--acc);margin-top:12px;font-weight:700">规则校验</div>
+          <div id="h-validate" style="font-size:12px;margin-top:4px;line-height:1.7"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 数码兽 ================= -->
+  <div id="sec-digimon" class="hidden">
+    <div class="cols">
+      <div>
+        <!-- 阶段与基本信息 -->
+        <div class="card">
+          <h3><span class="num">1</span> 阶段与基本信息</h3>
+          <div class="hint">在游戏开始时至少构建好一只成熟期（Champion）数码兽。阶段决定 DP、基础移动、伤口格、头脑、攻击数与阶段加成。</div>
+          <div class="row">
+            <div class="field" style="flex:1.4"><label>进化阶段</label><select id="d-stage" onchange="onStageChange()"></select></div>
+            <div class="field"><label>数码兽名称</label><input type="text" id="d-name" placeholder="例：多拉兽"></div>
+            <div class="field"><label>英文名</label><input type="text" id="d-en" placeholder="例：Dracomon"></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>属性（疫苗/数据/病毒）</label>
+              <select id="d-attr">
+                <option>疫苗 Vaccine</option><option>数据 Data</option><option>病毒 Virus</option>
+              </select>
+            </div>
+            <div class="field"><label>体型</label><select id="d-size" onchange="renderDigimon()"></select></div>
+            <div class="field"><label>领域 Field</label><input type="text" id="d-field" placeholder="例：龙之咆哮"></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>科属 / 类型（猎杀者等特质需要）</label><input type="text" id="d-family" placeholder="例：龙、恐龙"></div>
+          </div>
+          <div id="d-stage-info" class="note"></div>
+        </div>
+
+        <!-- 属性分配 -->
+        <div class="card">
+          <h3><span class="num">2</span> 属性分配 <span style="font-weight:400;font-size:12px;color:var(--txt-dim)">（1 DP = 1 点；购买特质前每个属性至少 1 点）</span></h3>
+          <div id="d-stats"></div>
+          <div id="d-stat-err" class="err"></div>
+        </div>
+
+        <!-- 特质 -->
+        <div class="card">
+          <h3><span class="num">3</span> 特质 Qualities <span style="font-weight:400;font-size:12px;color:var(--txt-dim)" id="d-q-summary"></span></h3>
+          <div class="hint">静态 [S]：始终生效；触发 [T]：需要激活；攻击 [A]：修改攻击。标注"最高 X 级"可多次购买。购买特质前每个属性至少 1 点，购买后不得低于 0。</div>
+          <div id="d-qualities"></div>
+        </div>
+
+        <!-- 攻击 -->
+        <div class="card">
+          <h3><span class="num">4</span> 攻击 Attacks <span style="font-weight:400;font-size:12px;color:var(--txt-dim)">（阶段决定攻击数量）</span></h3>
+          <div class="hint">攻击拥有 [近战] 或 [远程] 标签（免费），以及 [伤害] 或 [支援]（免费）。购买的效果/范围/破甲/必中等标签可挂载到攻击上。</div>
+          <div id="d-attacks"></div>
+        </div>
+      </div>
+
+      <!-- 数码兽摘要 -->
+      <div>
+        <div class="card summary sticky">
+          <h3>📋 角色摘要</h3>
+          <div class="cp-bar"><i id="d-dp-fill" style="width:0%"></i></div>
+          <div class="sum-item"><span class="lbl">数码点 DP（剩余/总）</span><span class="val" id="d-dp-left">0 / 25</span></div>
+          <div class="sum-item"><span class="lbl">属性投入</span><span class="val" id="d-attr-spent">0</span></div>
+          <div class="sum-item"><span class="lbl">特质投入</span><span class="val" id="d-q-spent">0</span></div>
+          <div class="sum-item"><span class="lbl">负面特质返还</span><span class="val" id="d-neg-refund">0</span></div>
+          <div style="font-size:13px;color:var(--acc);margin-top:12px;font-weight:700">属性</div>
+          <div class="derived" id="d-stats-grid"></div>
+          <div style="font-size:13px;color:var(--acc);margin-top:12px;font-weight:700">衍生属性</div>
+          <div class="derived" id="d-derived-grid"></div>
+          <div style="font-size:13px;color:var(--acc);margin-top:12px;font-weight:700">特化值 / 参数</div>
+          <div class="derived" id="d-spec-grid"></div>
+          <div style="font-size:13px;color:var(--acc);margin-top:12px;font-weight:700">规则校验</div>
+          <div id="d-validate" style="font-size:12px;margin-top:4px;line-height:1.7"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导出 -->
+  <div class="card" style="margin-top:14px">
+    <h3>💾 导出角色卡</h3>
+    <div class="hint">打印或"另存为 PDF"可生成排版精美的双页角色卡（人类 + 数码兽各一页）；Excel 分「人类」「数码兽」两个工作表；TXT 为纯文本。</div>
+    <div class="export-bar">
+      <button class="btn btn-primary" onclick="window.print()">🖨 打印 / 另存为 PDF</button>
+      <button class="btn btn-primary" onclick="exportExcel()">📊 导出 Excel</button>
+      <button class="btn btn-primary" onclick="exportTXT()">📝 导出 TXT</button>
+      <button class="btn btn-danger" onclick="resetAll()">↺ 重置全部</button>
+    </div>
+    <div id="export-msg" class="note"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+ * 状态
+ * ============================================================ */
+const S = {
+  tab: 'human',
+  lvl: 'standard',
+  human: {
+    stats: { agility:0, body:0, charisma:0, intelligence:0, willpower:0 },
+    skills: { dodge:0, fight:0, stealth:0, athletics:0, endurance:0, feats:0,
+              manipulate:0, perform:0, persuasion:0, computer:0, survival:0, knowledge:0,
+              perception:0, decipher:0, bravery:0 },
+    torments: [] // {type, name, crossed}
+  },
+  digimon: {
+    stage: 'rookie',
+    size: 'medium',
+    stats: { accuracy:0, damage:0, dodge:0, armor:0, health:0 },
+    qualities: {},        // id -> {rank: n}
+    attacks: []           // {name, kind:'melee'|'ranged', mode:'damage'|'support', tags:[]}
+  }
+};
+
+/* ============================================================
+ * 工具
+ * ============================================================ */
+const $ = id => document.getElementById(id);
+const floor = Math.floor;
+
+function rankOf(qid){ return (S.digimon.qualities[qid]||{}).rank || 0; }
+function hasQ(qid){ return rankOf(qid) > 0; }
+
+/* 特质 DP 消耗（含等级、免费第一级、负面返还） */
+function qualityDp(qid){
+  const q = QUALITY_MAP[qid];
+  if(!q) return 0;
+  const r = rankOf(qid);
+  if(r <= 0) return 0;
+  let dp = q.dp;
+  if(q.freeFirst && q.dp > 0) dp = Math.max(0, dp * (r - 1));
+  else dp = dp * r;
+  return dp;
+}
+
+/* 特质属性修正聚合（不含等级相关） */
+function qualityMods(){
+  const m = { acc:0, dmg:0, dodge:0, armor:0, health:0, move:0, baseMove:0, spec:0,
+              meleeAcc:0, rangedAcc:0, dodgeVsMelee:0, weaponAcc:0, weaponDmg:0,
+              brains:0, body:0, agility:0 };
+  for(const qid in S.digimon.qualities){
+    const r = rankOf(qid);
+    if(r <= 0) continue;
+    const q = QUALITY_MAP[qid];
+    if(!q || !q.mods) continue;
+    for(const k in q.mods){
+      const v = q.mods[k];
+      m[k] += (typeof v === 'number') ? v * r : v;
+    }
+  }
+  return m;
+}
+
+/* 已购买效果标签列表（用于攻击挂载） */
+function ownedEffects(){
+  return QUALITIES.filter(q => q.group === 'effect' && hasQ(q.id)).map(q => ({id:q.id, name:q.name, dp:q.dp}));
+}
+function ownedAreaTags(){
+  return hasQ('atk_area') ? RANGE_TAGS : [];
+}
+
+/* ============================================================
+ * 人类计算
+ * ============================================================ */
+function lvlInfo(){ return CAMPAIGN_LEVELS[S.lvl]; }
+
+function humanAttrSpent(){ return Object.values(S.human.stats).reduce((a,b)=>a+b,0); }
+function humanSkillSpent(){ return Object.values(S.human.skills).reduce((a,b)=>a+b,0); }
+function humanTormentSpent(){
+  return S.human.torments.reduce((sum,t)=>{
+    const tt = TORMENT_TYPES.find(x=>x.key===t.type);
+    return sum + (tt ? t.crossed : 0);
+  }, 0);
+}
+function humanCpLeft(){
+  return lvlInfo().cp - humanAttrSpent() - humanSkillSpent() - humanTormentSpent();
+}
+function humanDerived(){
+  const st = S.human.stats, sk = S.human.skills;
+  const wound = Math.max(2, st.body + sk.endurance);
+  const speed = st.agility + sk.survival;
+  const acc = st.agility + sk.fight + (sk.fight === 0 ? -1 : 0);
+  const dodge = st.agility + sk.dodge + (sk.dodge === 0 ? -1 : 0);
+  const armor = st.body + sk.endurance;
+  const dmg = st.body + sk.fight;
+  return { wound, speed, acc, dodge, armor, dmg };
+}
+function humanInspMax(){ return Math.max(1, S.human.stats.willpower); }
+function humanUnlockedOrders(){
+  const info = lvlInfo();
+  const idx = ['standard','enhanced','extreme'].indexOf(S.lvl);
+  return SPECIAL_ORDERS.filter(o => (S.human.stats[o.attr] || 0) >= o.req[idx]);
+}
+
+/* ============================================================
+ * 数码兽计算
+ * ============================================================ */
+function dStage(){ return STAGE_INDEX[S.digimon.stage]; }
+function dSize(){ return DIGIMON_SIZES.find(s=>s.key===S.digimon.size); }
+
+function dAttrSpent(){ return Object.values(S.digimon.stats).reduce((a,b)=>a+b,0); }
+function dQualitySpent(){
+  return QUALITIES.reduce((s,q)=> s + (q.group==='negative' ? 0 : qualityDp(q.id)), 0);
+}
+function dNegRefund(){
+  return QUALITIES.reduce((s,q)=> s + (q.group==='negative' ? qualityDp(q.id) : 0), 0);
+}
+function dDpLeft(){
+  return dStage().dp - dAttrSpent() - dQualitySpent() - dNegRefund();
+}
+function dDerived(){
+  const st = S.digimon.stats;
+  const mods = qualityMods();
+  const stage = dStage(), size = dSize();
+  const a = st.accuracy + mods.acc;
+  const dmg = st.damage + mods.dmg;
+  const dod = st.dodge + mods.dodge;
+  const arm = st.armor + mods.armor;
+  const hp  = st.health + mods.health;
+  const wound = hp + stage.wound;
+  const brains = floor(a/2) + stage.brains + mods.brains;
+  const body = floor((hp + dmg + arm)/3) + size.body + mods.body;
+  const agility = floor((a + dod)/2) + size.agility + mods.agility;
+  const bit = floor(brains/10) + stage.sb + mods.spec;
+  const cpu = floor(body/10) + stage.sb + mods.spec;
+  const ram = floor(agility/10) + stage.sb + mods.spec;
+  const move = stage.move + mods.baseMove + mods.move;
+  const range = floor((a + brains)/2) + bit;
+  const effLimit = floor(a/2) + brains + bit;
+  return { a, dmg, dod, arm, hp, wound, brains, body, agility, bit, cpu, ram, move, range, effLimit };
+}
+function dNegCap(){ return dStage().negCap; }
+function dNegSpent(){
+  return QUALITIES.filter(q=>q.group==='negative' && hasQ(q.id))
+    .reduce((s,q)=> s + rankOf(q.id), 0);
+}
+function dFreeCount(){ return QUALITIES.filter(q=>q.group==='free' && hasQ(q.id)).length; }
+function dAttackLimit(){ return dStage().attacks; }
+
+/* ============================================================
+ * 渲染：Tabs
+ * ============================================================ */
+function switchTab(t){
+  S.tab = t;
+  $('tab-human').classList.toggle('active', t==='human');
+  $('tab-digimon').classList.toggle('active', t==='digimon');
+  $('sec-human').classList.toggle('hidden', t!=='human');
+  $('sec-digimon').classList.toggle('hidden', t!=='digimon');
+}
+
+/* ============================================================
+ * 渲染：人类
+ * ============================================================ */
+function renderHuman(){
+  renderLvls();
+  renderHumanStats();
+  renderHumanSkills();
+  renderHumanTorments();
+  renderHumanSummary();
+}
+
+function renderLvls(){
+  const el = $('lvl-select');
+  const info = lvlInfo();
+  el.innerHTML = Object.keys(CAMPAIGN_LEVELS).map(k=>{
+    const l = CAMPAIGN_LEVELS[k];
+    const sel = k===S.lvl;
+    return `<div class="lvl ${sel?'sel':''}" onclick="setLvl('${k}')">
+      <b>${l.name}</b>
+      <div class="kv"><span>年龄</span><span>${l.age}</span></div>
+      <div class="kv"><span>起始 CP</span><span>${l.cp}</span></div>
+      <div class="kv"><span>起始上限</span><span>${l.cap}</span></div>
+      <div class="kv"><span>最终上限</span><span>${l.finalCap}</span></div>
+      <div class="kv"><span>类别上限</span><span>${l.catCap}</span></div>
+    </div>`;
+  }).join('');
+}
+function setLvl(k){ S.lvl = k; renderHuman(); }
+
+function statStepperHtml(scope, key, val, max, onchange){
+  return `<div class="stepper">
+    <button onclick="${onchange}('${key}',-1)" ${val<=0?'disabled':''}>−</button>
+    <span class="val">${val}</span>
+    <button onclick="${onchange}('${key}',1)" ${val>=max?'disabled':''}>＋</button>
+  </div>`;
+}
+
+function renderHumanStats(){
+  const el = $('h-stats');
+  const cap = lvlInfo().cap;
+  el.innerHTML = HUMAN_STATS.map(s=>{
+    const v = S.human.stats[s.key];
+    return `<div class="stat-block">
+      <div class="stat-head">
+        <b>${s.name}</b>
+        ${statStepperHtml('h','hStat',v,cap,'hStatStep')}
+      </div>
+    </div>`;
+  }).join('');
+  validateHuman();
+}
+function hStatStep(key, d){
+  const cap = lvlInfo().cap;
+  const nv = S.human.stats[key] + d;
+  if(nv<0 || nv>cap) return;
+  S.human.stats[key] = nv;
+  renderHuman();
+}
+
+function renderHumanSkills(){
+  const el = $('h-skills');
+  const cap = lvlInfo().cap;
+  el.innerHTML = HUMAN_STATS.map(s=>{
+    return `<div class="stat-block">
+      <div class="stat-head"><b style="font-size:13px;color:var(--acc)">${s.name} 技能</b></div>
+      <div class="skills">
+        ${s.skills.map(sk=>{
+          const v = S.human.skills[sk.key];
+          return `<div class="skill">
+            <span class="n">${sk.name}</span>
+            ${statStepperHtml('h','hSkill',v,cap,'hSkillStep')}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  validateHuman();
+}
+function hSkillStep(key, d){
+  const cap = lvlInfo().cap;
+  const nv = S.human.skills[key] + d;
+  if(nv<0 || nv>cap) return;
+  S.human.skills[key] = nv;
+  renderHuman();
+}
+
+function renderHumanTorments(){
+  const el = $('h-torments');
+  el.innerHTML = S.human.torments.map((t,i)=>{
+    const tt = TORMENT_TYPES.find(x=>x.key===t.type);
+    const boxes = Array.from({length:tt.boxes}, (_,k)=>`
+      <i class="${k < t.crossed ? 'on':''}" title="点击划掉折磨格" onclick="toggleTorment(${i},${k})">✓</i>`).join('');
+    return `<div class="torment">
+      <span class="tag ${t.type}">${tt.name} · ${tt.boxes} 格</span>
+      <div class="grow">
+        <input type="text" value="${escapeHtml(t.name)}" placeholder="折磨描述" oninput="S.human.torments[${i}].name=this.value;renderHuman()">
+        <div class="boxes">${boxes}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="delTorment(${i})">✕</button>
+    </div>`;
+  }).join('');
+  if(!S.human.torments.length) el.innerHTML = '<div class="note">尚未添加折磨（建议：两个轻微或一个严重）。</div>';
+}
+function addTorment(type){
+  S.human.torments.push({type, name:'', crossed:0});
+  renderHuman();
+}
+function delTorment(i){ S.human.torments.splice(i,1); renderHuman(); }
+function toggleTorment(i,k){
+  const t = S.human.torments[i];
+  const tt = TORMENT_TYPES.find(x=>x.key===t.type);
+  if(k < t.crossed) t.crossed = k;
+  else if(k === t.crossed && k < tt.maxCross) t.crossed = k+1;
+  else if(k === t.crossed) t.crossed = k; // 已达创建上限，允许在此格上重复点击维持
+  renderHuman();
+}
+
+function renderHumanSummary(){
+  const info = lvlInfo();
+  const cp = humanCpLeft();
+  const at = humanAttrSpent(), sk = humanSkillSpent(), tm = humanTormentSpent();
+  const der = humanDerived();
+  const insp = humanInspMax();
+  const spentTotal = at + sk + tm;
+  $('h-cp-left').textContent = `${cp} / ${info.cp}`;
+  $('h-cp-left').className = 'val ' + (cp<0 ? 'bad' : (cp===0?'good':''));
+  $('h-cp-fill').style.width = Math.min(100, spentTotal/info.cp*100) + '%';
+  $('h-attr-spent').textContent = at;
+  $('h-skill-spent').textContent = sk;
+  $('h-torment-spent').textContent = tm;
+  $('h-insp').textContent = `1 / ${insp}`;
+  $('h-d-wound').textContent = der.wound;
+  $('h-d-speed').textContent = der.speed;
+  $('h-d-acc').textContent = der.acc;
+  $('h-d-dodge').textContent = der.dodge;
+  $('h-d-armor').textContent = der.armor;
+  $('h-d-dmg').textContent = der.dmg;
+
+  const orders = humanUnlockedOrders();
+  $('h-orders').innerHTML = orders.length
+    ? orders.map(o=>`<div>◈ ${o.name} <span style="color:var(--txt-dim)">(${o.type})</span></div>`).join('')
+    : '<span>- 未解锁（提升属性）</span>';
+  validateHuman();
+}
+
+/* 人类规则校验 */
+function validateHuman(){
+  const cap = lvlInfo().cap;
+  const errs = [];
+  const stVals = Object.values(S.human.stats);
+  const skVals = Object.values(S.human.skills);
+  const maxSt = Math.max(...stVals), maxSk = Math.max(...skVals);
+  const stAtCap = stVals.filter(v=>v===cap).length;
+  const skAtCap = skVals.filter(v=>v===cap).length;
+  if(stAtCap > 1) errs.push(`属性中有 ${stAtCap} 项达到起始上限 ${cap}（最多 1 项）`);
+  if(skAtCap > 1) errs.push(`技能中有 ${skAtCap} 项达到起始上限 ${cap}（最多 1 项）`);
+  if(maxSt > cap) errs.push(`属性超过起始上限 ${cap}`);
+  if(maxSk > cap) errs.push(`技能超过起始上限 ${cap}`);
+  if(humanAttrSpent() > lvlInfo().catCap) errs.push(`属性类别投入 ${humanAttrSpent()} 超过类别上限 ${lvlInfo().catCap}`);
+  if(humanSkillSpent() > lvlInfo().catCap) errs.push(`技能类别投入 ${humanSkillSpent()} 超过类别上限 ${lvlInfo().catCap}`);
+  const cp = humanCpLeft();
+  if(cp < 0) errs.push(`创建点超支 ${-cp} 点`);
+  const majorCount = S.human.torments.filter(t=>t.type==='major').length;
+  const minorCount = S.human.torments.filter(t=>t.type==='minor').length;
+  const terrCount = S.human.torments.filter(t=>t.type==='terrible').length;
+  if(minorCount < 2 && majorCount < 1) errs.push('建议折磨：两个轻微或一个严重（GM 可调整）');
+  if(majorCount > 1) errs.push(`严重折磨超过 1 个`);
+  if(terrCount > 0 && (minorCount>=2||majorCount>=1)) errs.push('可怕折磨通常应 GM 谨慎批准');
+  const el = $('h-validate');
+  el.innerHTML = errs.length
+    ? errs.map(e=>`<div class="err">⚠ ${e}</div>`).join('')
+    : '<div class="okmsg">✓ 创建点数与规则校验通过</div>';
+  const statsEl = $('h-stat-err'), skillEl = $('h-skill-err');
+  if(statsEl) statsEl.innerHTML = (stAtCap>1||maxSt>cap||humanAttrSpent()>lvlInfo().catCap)
+    ? errs.filter(e=>/属性/.test(e)).map(e=>`<div>⚠ ${e}</div>`).join('') : '';
+  if(skillEl) skillEl.innerHTML = (skAtCap>1||maxSk>cap||humanSkillSpent()>lvlInfo().catCap)
+    ? errs.filter(e=>/技能/.test(e)).map(e=>`<div>⚠ ${e}</div>`).join('') : '';
+}
+
+/* ============================================================
+ * 渲染：数码兽
+ * ============================================================ */
+function renderDigimon(){
+  renderStageSelect();
+  renderSizeSelect();
+  renderDigimonStats();
+  renderQualities();
+  renderAttacks();
+  renderDigimonSummary();
+}
+function onStageChange(){
+  S.digimon.stage = $('d-stage').value;
+  renderDigimon();
+}
+function renderStageSelect(){
+  const sel = $('d-stage');
+  sel.innerHTML = DIGIMON_STAGES.map(s=>
+    `<option value="${s.key}" ${s.key===S.digimon.stage?'selected':''}>${s.name}（${s.dp} DP）</option>`).join('');
+  const st = dStage();
+  $('d-stage-info').innerHTML = `阶段数值 — DP：${st.dp} ｜ 基础移动：${st.move} ｜ 伤口格：${st.wound} ｜ 头脑：${st.brains} ｜ 攻击数：${st.attacks} ｜ 特化值：${st.spec} ｜ 阶段加成：${st.sb} ｜ 负面特质 DP 上限：${st.negCap}`;
+}
+function renderSizeSelect(){
+  const sel = $('d-size');
+  sel.innerHTML = DIGIMON_SIZES.map(s=>
+    `<option value="${s.key}" ${s.key===S.digimon.size?'selected':''}>${s.name}（体能 ${s.body>=0?'+':''}${s.body} / 敏捷 ${s.agility>=0?'+':''}${s.agility}）</option>`).join('');
+}
+
+function renderDigimonStats(){
+  const el = $('d-stats');
+  el.innerHTML = DIGIMON_STATS.map(s=>{
+    const v = S.digimon.stats[s.key];
+    return `<div class="stat-block">
+      <div class="stat-head">
+        <b>${s.name}</b>
+        ${statStepperHtml('d','dStat',v,99,'dStatStep')}
+      </div>
+    </div>`;
+  }).join('');
+}
+function dStatStep(key, d){
+  const nv = S.digimon.stats[key] + d;
+  if(nv<0) return;
+  S.digimon.stats[key] = nv;
+  renderDigimon();
+}
+
+function qualityMeta(q){
+  const parts = [];
+  parts.push(`DP ${q.dp>=0?'':'−'}${Math.abs(q.dp)}${q.rank>1 ? ` ×${q.rank}`:''}`);
+  if(q.cat) parts.push(`[${q.cat}]`);
+  if(q.prereq) parts.push(`前置：${q.prereq.map(p=>QUALITY_MAP[p]?QUALITY_MAP[p].name.split(' ')[0]:p).join('、')}`);
+  if(q.stageMin) parts.push(`阶段≥${DIGIMON_STAGES[q.stageMin-1].name}`);
+  if(q.stageMaxNote) parts.push(`<span class="bad">${q.stageMaxNote}</span>`);
+  if(q.rankNote) parts.push(`<span class="bad">${q.rankNote}</span>`);
+  if(q.exclusive) parts.push(`<span class="bad">互斥：${q.exclusive.map(e=>QUALITY_MAP[e]?QUALITY_MAP[e].name.split(' ')[0]:e).join('、')}</span>`);
+  if(q.pick) parts.push(`需要选择：${q.pick}`);
+  if(q.free) parts.push('<span class="ok">免费特质（只能 1 个）</span>');
+  if(q.group==='negative') parts.push('<span class="bad">负面特质（返还 DP，受阶段限制）</span>');
+  return parts.join(' · ');
+}
+
+/* 前置是否满足 */
+function prereqMet(q){
+  if(!q.prereq) return true;
+  return q.prereq.every(p => hasQ(p) || (QUALITY_MAP[p] && QUALITY_MAP[p].group==='dataopt' && q.group==='dataspec' && QUALITIES.filter(x=>x.group==='dataopt'&&hasQ(x.id)).length>0));
+}
+function qualityStageOk(q){
+  if(!q.stageMin) return true;
+  return dStage().index >= q.stageMin - 1;
+}
+
+function renderQualities(){
+  const el = $('d-qualities');
+  const negLeft = dNegCap() - dNegSpent();
+  el.innerHTML = QUALITY_GROUPS.map(g=>{
+    const qs = QUALITIES.filter(q=>q.group===g.key);
+    if(!qs.length) return '';
+    const qhtml = qs.map(q=>{
+      const r = rankOf(q.id);
+      const dp = qualityDp(q.id);
+      const maxRank = q.rank || 1;
+      const freeFirst = q.freeFirst && r===1 && q.dp>0;
+      const negLimit = q.group==='negative' && r>=maxRank && negLeft<=0;
+      const stageOk = qualityStageOk(q);
+      const preOk = prereqMet(q);
+      const exclOk = !q.exclusive || q.exclusive.every(e=>!hasQ(e)) || hasQ(q.id);
+      const freeOk = q.group!=='free' || dFreeCount()===0 || hasQ(q.id);
+      const canEnable = stageOk && preOk && exclOk && freeOk && !negLimit;
+      const tags = ['melee','ranged','damage','support','charge','pierce','certain','weapon','sig','counter','mighty','effect','area'];
+      const disabledReason = !stageOk ? `阶段不足（需${q.stageMin?DIGIMON_STAGES[q.stageMin-1].name:''}）`
+        : !preOk ? '前置不满足'
+        : !exclOk ? '与已购特质互斥'
+        : q.group==='free' && !hasQ(q.id) && dFreeCount()>0 ? '只能获得一个免费特质'
+        : negLimit ? '负面特质数量已达阶段上限'
+        : '';
+      return `<div class="quality">
+        <input type="checkbox" class="chk" ${r>0?'checked':''} ${canEnable?'':'disabled'} title="${disabledReason}"
+          onchange="toggleQuality('${q.id}',this.checked)">
+        <div class="info">
+          <div class="qname">${q.name}<span class="dp ${q.dp<0?'neg':''}">${freeFirst?'免费(首级)':(q.dp>=0?`−${dp} DP`:`+${Math.abs(dp)} DP`)}</span></div>
+          <div class="qdesc">${q.desc}</div>
+          <div class="qmeta">${qualityMeta(q)}</div>
+        </div>
+        ${q.rank>1 ? `<div class="rankbox">
+          <div class="stepper">
+            <button onclick="rankQ('${q.id}',-1)" ${r<=0?'disabled':''}>−</button>
+            <span class="rv">${r}</span>
+            <button onclick="rankQ('${q.id}',1)" ${!canEnable||r>=maxRank?'disabled':''}>＋</button>
+          </div>
+        </div>`:''}
+      </div>`;
+    }).join('');
+    const gopen = qs.some(q=>hasQ(q.id)) ? 'open' : '';
+    return `<div class="qgroup ${gopen}" id="qg-${g.key}">
+      <div class="qg-head" onclick="this.parentElement.classList.toggle('open')">
+        <b>${g.name}</b><span>${g.note||''}</span>
+      </div>
+      <div class="qg-body">${qhtml}</div>
+    </div>`;
+  }).join('');
+  $('d-q-summary').textContent = `（已选 ${QUALITIES.filter(q=>hasQ(q.id)).length} 项 / 花费 ${dQualitySpent()} DP）`;
+}
+function toggleQuality(id, on){
+  if(on){
+    const q = QUALITY_MAP[id];
+    if(!qualityStageOk(q) || !prereqMet(q)) return;
+    S.digimon.qualities[id] = {rank:1};
+  } else {
+    delete S.digimon.qualities[id];
+  }
+  renderDigimon();
+}
+function rankQ(id, d){
+  const q = QUALITY_MAP[id];
+  const cur = rankOf(id);
+  const nv = cur + d;
+  if(nv < 0) return;
+  if(nv > (q.rank||1)) return;
+  if(nv === 0){ delete S.digimon.qualities[id]; }
+  else { S.digimon.qualities[id] = {rank:nv}; }
+  renderDigimon();
+}
+
+/* ---------- 攻击 ---------- */
+function ensureAttacks(){
+  const need = dAttackLimit();
+  while(S.digimon.attacks.length < need){
+    S.digimon.attacks.push({name:'', kind:'melee', mode:'damage', tags:[]});
+  }
+  S.digimon.attacks = S.digimon.attacks.slice(0, need);
+}
+function renderAttacks(){
+  ensureAttacks();
+  const el = $('d-attacks');
+  const fx = ownedEffects();
+  const area = ownedAreaTags();
+  const canTag = {
+    charge: hasQ('atk_charge'),
+    pierce: hasQ('atk_armorpierce'),
+    certain: hasQ('atk_certain'),
+    weapon: hasQ('atk_weapon'),
+    sig: hasQ('sig_move'),
+    counter: hasQ('cnt_shock') || hasQ('cnt_counter'),
+    mighty: hasQ('atk_mighty'),
+    area: hasQ('atk_area'),
+    effect: fx.length>0,
+    full: hasQ('ng_fullaction')
+  };
+  el.innerHTML = S.digimon.attacks.map((atk,i)=>{
+    const tagChip = (k,label,off)=>{
+      const on = atk.tags.includes(k);
+      const dis = off && !on;
+      return `<span class="chip ${on?'on':''} ${dis?'dis':''}" onclick="${dis?'':`toggleAtkTag(${i},'${k}')`}">
+        <input type="checkbox" ${on?'checked':''} ${dis?'disabled':''}>${label}</span>`;
+    };
+    const effChips = fx.map(e=>{
+      const key = 'eff:'+e.id;
+      const on = atk.tags.includes(key);
+      return `<span class="chip ${on?'on':''}" onclick="toggleAtkTag(${i},'${key}')"><input type="checkbox" ${on?'checked':''}>${e.name}</span>`;
+    }).join('');
+    const areaChips = area.map(a=>{
+      const key = 'area:'+a.key;
+      const on = atk.tags.includes(key);
+      return `<span class="chip ${on?'on':''}" onclick="toggleAtkTag(${i},'${key}')"><input type="checkbox" ${on?'checked':''}>${a.name}</span>`;
+    }).join('');
+    return `<div class="attack">
+      <div class="ahead">
+        <input type="text" placeholder="攻击名称（例：龙之驱动）" value="${escapeHtml(atk.name)}" oninput="S.digimon.attacks[${i}].name=this.value">
+        <select onchange="S.digimon.attacks[${i}].kind=this.value" style="width:auto">
+          <option value="melee" ${atk.kind==='melee'?'selected':''}>[近战]</option>
+          <option value="ranged" ${atk.kind==='ranged'?'selected':''}>[远程]</option>
+        </select>
+        <select onchange="S.digimon.attacks[${i}].mode=this.value" style="width:auto">
+          <option value="damage" ${atk.mode==='damage'?'selected':''}>[伤害]</option>
+          <option value="support" ${atk.mode==='support'?'selected':''}>[支援]</option>
+        </select>
+      </div>
+      <div class="tags">
+        ${tagChip('charge','[冲锋]',!canTag.charge)}
+        ${tagChip('pierce','[破甲]',!canTag.pierce)}
+        ${tagChip('certain','[必中]',!canTag.certain)}
+        ${tagChip('weapon','[武器]',!canTag.weapon)}
+        ${tagChip('sig','[招牌招式]',!canTag.sig)}
+        ${tagChip('counter','[反击]',!canTag.counter)}
+        ${tagChip('mighty','[强力一击]',!canTag.mighty)}
+        ${areaChips}
+        ${effChips}
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleAtkTag(i, key){
+  const tags = S.digimon.attacks[i].tags;
+  const idx = tags.indexOf(key);
+  if(idx>=0) tags.splice(idx,1);
+  else tags.push(key);
+  renderAttacks();
+}
+
+function renderDigimonSummary(){
+  const stage = dStage();
+  const dp = dDpLeft();
+  const at = dAttrSpent(), q = dQualitySpent(), ng = dNegRefund();
+  const der = dDerived();
+  $('d-dp-left').textContent = `${dp} / ${stage.dp}`;
+  $('d-dp-left').className = 'val ' + (dp<0?'bad':(dp===0?'good':''));
+  $('d-dp-fill').style.width = Math.min(100, (at+q+ng)/stage.dp*100) + '%';
+  $('d-attr-spent').textContent = at;
+  $('d-q-spent').textContent = q;
+  $('d-neg-refund').textContent = `+${ng}`;
+
+  $('d-stats-grid').innerHTML = DIGIMON_STATS.map(s=>{
+    const v = S.digimon.stats[s.key];
+    return `<div class="dcell"><div class="dn">${s.name}</div><div class="dv">${v}</div></div>`;
+  }).join('');
+
+  const dg = [
+    {n:'伤口格', v:der.wound}, {n:'头脑', v:der.brains}, {n:'体能', v:der.body}, {n:'敏捷', v:der.agility},
+    {n:'移动', v:der.move}, {n:'射程', v:der.range}, {n:'有效极限', v:der.effLimit}
+  ];
+  $('d-derived-grid').innerHTML = dg.map(x=>
+    `<div class="dcell"><div class="dn">${x.n}</div><div class="dv">${x.v}</div></div>`).join('');
+
+  const sg = [
+    {n:'BIT', v:der.bit}, {n:'CPU', v:der.cpu}, {n:'RAM', v:der.ram}
+  ];
+  $('d-spec-grid').innerHTML = sg.map(x=>
+    `<div class="dcell spec"><div class="dn">${x.n}</div><div class="dv">${x.v}</div></div>`).join('');
+
+  validateDigimon();
+}
+
+function validateDigimon(){
+  const errs = [];
+  const dp = dDpLeft();
+  const st = S.digimon.stats;
+  const hasQual = QUALITIES.some(q=>hasQ(q.id) && q.group!=='free' && q.group!=='negative');
+  if(hasQual && Object.values(st).some(v=>v<1)) errs.push('购买特质前每个属性至少 1 点');
+  if(dp<0) errs.push(`数码点超支 ${-dp} 点`);
+  const negLeft = dNegCap() - dNegSpent();
+  if(negLeft<0) errs.push(`负面特质超过阶段上限 ${dNegCap()}`);
+  if(dFreeCount()>1) errs.push('只能获得一个免费特质');
+  if(hasQ('burst_power')) errs.push('爆发力量需 GM 批准后方可使用');
+  const stage = dStage();
+  // 攻击完整性
+  const empty = S.digimon.attacks.some(a=>!a.name.trim());
+  if(empty) errs.push('有攻击未命名');
+  const el = $('d-validate');
+  el.innerHTML = errs.length
+    ? errs.map(e=>`<div class="err">⚠ ${e}</div>`).join('')
+    : '<div class="okmsg">✓ 数码点与规则校验通过</div>';
+}
+
+/* ============================================================
+ * 数据收集（导出用）
+ * ============================================================ */
+function escapeHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function humanData(){
+  const der = humanDerived();
+  const orders = humanUnlockedOrders();
+  const info = lvlInfo();
+  return {
+    name: $('h-name').value, gender: $('h-gender').value, age: $('h-age').value,
+    partner: $('h-partner').value, bio: $('h-bio').value,
+    lvl: info.name, ageRange: info.age, cp: info.cp,
+    stats: {...S.human.stats}, skills: {...S.human.skills},
+    torments: S.human.torments.map(t=>({...t})),
+    aspectMajor: $('h-aspect-major').value, aspectMajorDesc: $('h-aspect-major-desc').value,
+    aspectMinor: $('h-aspect-minor').value, aspectMinorDesc: $('h-aspect-minor-desc').value,
+    derived: der, orders,
+    inspMax: humanInspMax(),
+    attrSpent: humanAttrSpent(), skillSpent: humanSkillSpent(), tormentSpent: humanTormentSpent(),
+    cpLeft: humanCpLeft()
+  };
+}
+
+function digimonData(){
+  const der = dDerived();
+  const stage = dStage();
+  const quals = QUALITIES.filter(q=>hasQ(q.id)).map(q=>({
+    name:q.name, dp:qualityDp(q.id), rank:rankOf(q.id), cat:q.cat, group:q.group, desc:q.desc
+  }));
+  return {
+    name: $('d-name').value, en: $('d-en').value, attr: $('d-attr').value,
+    field: $('d-field').value, family: $('d-family').value,
+    stage: stage.name, size: dSize().name,
+    stats: {...S.digimon.stats},
+    qualities: quals, attacks: S.digimon.attacks.map(a=>({...a})),
+    derived: der,
+    attrSpent: dAttrSpent(), qSpent: dQualitySpent(), negRefund: dNegRefund(), dpLeft: dDpLeft()
+  };
+}
+
+/* ============================================================
+ * 导出
+ * ============================================================ */
+function expMsg(s, ok=true){
+  const el = $('export-msg');
+  el.className = ok ? 'okmsg' : 'err';
+  el.textContent = s;
+  setTimeout(()=>{el.textContent='';}, 6000);
+}
+
+function escapeTxt(s){ return String(s||'').replace(/\|/g,'│').replace(/\n/g,' '); }
+
+function buildTXT(){
+  const H = humanData(), D = digimonData();
+  const L = [];
+  const line = s=>L.push(s);
+  line('════════════════════════════════════════════════');
+  line('  数码宝贝：数字大冒险（DDA v1.4）· 角色卡');
+  line('════════════════════════════════════════════════');
+  line('');
+  line('────────────────────────────────────────────────');
+  line('【人类角色】');
+  line('────────────────────────────────────────────────');
+  line(`姓名：${H.name||'（未命名）'}    性别：${H.gender||'-'}    年龄：${H.age||'-'}（${H.lvl}，年龄范围 ${H.ageRange}）`);
+  line(`搭档：${H.partner||'-'}`);
+  line(`战役等级：${H.lvl}    起始 CP：${H.cp}    起始上限：${CAMPAIGN_LEVELS[S.lvl].cap} / 最终上限：${CAMPAIGN_LEVELS[S.lvl].finalCap}`);
+  line('');
+  line('【属性】');
+  for(const s of HUMAN_STATS){
+    line(`  ${s.name.padEnd(12)} ${H.stats[s.key]}   (${s.skills.map(sk=>`${sk.name.split(' ')[0]} ${H.skills[sk.key]}`).join(' / ')})`);
+  }
+  line('');
+  line('【衍生属性】');
+  const dn = {wound:'伤口格', speed:'速度/移动', acc:'精准池', dodge:'闪避池', armor:'护甲', dmg:'伤害'};
+  for(const k in dn) line(`  ${dn[k].padEnd(6)} ${H.derived[k]}`);
+  line('');
+  line(`【灵感】创建 1 点免费；上限 = 意志力 ${H.inspMax}`);
+  line('');
+  line('【折磨】');
+  if(!H.torments.length) line('  （无）');
+  H.torments.forEach(t=>{
+    const tt = TORMENT_TYPES.find(x=>x.key===t.type);
+    const boxes = Array.from({length:tt.boxes}, (_,k)=>k<t.crossed?'[X]':'[ ]').join('');
+    line(`  [${tt.name}] ${t.name||'（未填写）'}  ${boxes}  ${t.crossed}/${tt.boxes}`);
+  });
+  line('');
+  line('【面向】');
+  line(`  主要（+/-4）：${H.aspectMajor||'-'}`);
+  if(H.aspectMajorDesc) line(`    ${H.aspectMajorDesc}`);
+  line(`  次要（+/-2）：${H.aspectMinor||'-'}`);
+  if(H.aspectMinorDesc) line(`    ${H.aspectMinorDesc}`);
+  line('');
+  line('【特别指令（已解锁）】');
+  if(!H.orders.length) line('  （未解锁）');
+  H.orders.forEach(o=>line(`  ◈ ${o.name}（${o.type}）`));
+  line('');
+  if(H.bio) { line('【角色简介】'); line('  '+H.bio); line(''); }
+  line('────────────────────────────────────────────────');
+  line(`创建点：属性 ${H.attrSpent} + 技能 ${H.skillSpent} + 折磨 ${H.tormentSpent} = ${H.attrSpent+H.skillSpent+H.tormentSpent}/${H.cp}（剩余 ${H.cpLeft}）`);
+  line('');
+  line('────────────────────────────────────────────────');
+  line('【数码兽角色】');
+  line('────────────────────────────────────────────────');
+  line(`名称：${D.name||'（未命名）'} ${D.en?'('+D.en+')':''}    阶段：${D.stage}`);
+  line(`属性：${D.attr}    体型：${D.size}    领域：${D.field||'-'}    科属/类型：${D.family||'-'}`);
+  line(`数码点：${D.attrSpent+D.qSpent+D.negRefund}/${dStage().dp}（剩余 ${D.dpLeft}）`);
+  line('');
+  line('【属性】');
+  for(const s of DIGIMON_STATS) line(`  ${s.name.padEnd(8)} ${D.stats[s.key]}`);
+  line('');
+  line('【衍生属性】');
+  line(`  伤口格 ${D.derived.wound}  头脑 ${D.derived.brains}  体能 ${D.derived.body}  敏捷 ${D.derived.agility}`);
+  line(`  移动 ${D.derived.move}  射程 ${D.derived.range}  有效极限 ${D.derived.effLimit}`);
+  line('');
+  line('【特化值】');
+  line(`  BIT ${D.derived.bit}   CPU ${D.derived.cpu}   RAM ${D.derived.ram}`);
+  line('');
+  line('【特质】');
+  if(!D.qualities.length) line('  （无）');
+  D.qualities.forEach(q=>{
+    const dpStr = q.group==='negative' ? `+${Math.abs(q.dp)} DP` : `−${q.dp} DP`;
+    line(`  • ${q.name}（${dpStr}${q.rank>1?'，等级 '+q.rank:''}）`);
+  });
+  line('');
+  line('【攻击】');
+  if(!D.attacks.some(a=>a.name)) line('  （未命名）');
+  D.attacks.forEach(a=>{
+    const fxmap = {};
+    QUALITIES.filter(q=>q.group==='effect').forEach(q=>fxmap['eff:'+q.id]=q.name);
+    const areamap = {};
+    RANGE_TAGS.forEach(r=>areamap['area:'+r.key]=r.name);
+    const tagmap = {charge:'[冲锋]',pierce:'[破甲]',certain:'[必中]',weapon:'[武器]',sig:'[招牌招式]',counter:'[反击]',mighty:'[强力一击]',full:'[完整动作]'};
+    const tags = a.tags.map(t=>tagmap[t]||fxmap[t]||areamap[t]||'').filter(Boolean).join(' ');
+    line(`  ${a.name||'（未命名）'}：${a.kind==='melee'?'[近战]':'[远程]'} ${a.mode==='damage'?'[伤害]':'[支援]'} ${tags}`.trim());
+  });
+  line('');
+  return L.join('\n');
+}
+
+/* ---------- TXT ---------- */
+function exportTXT(){
+  const txt = buildTXT();
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  const h = humanData(), d = digimonData();
+  a.href = URL.createObjectURL(blob);
+  a.download = `DDA_角色卡_${h.name||'人类'}_${d.name||'数码兽'}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  expMsg('✓ TXT 已导出');
+}
+
+/* ---------- Excel ---------- */
+function exportExcel(){
+  if(typeof XLSX === 'undefined'){ expMsg('Excel 导出库（SheetJS）加载失败，请检查网络后重试。', false); return; }
+  const H = humanData(), D = digimonData();
+
+  /* 人类 sheet */
+  const hRows = [
+    ['数码宝贝：数字大冒险（DDA v1.4）角色卡'],
+    ['人类角色'],
+    ['姓名', H.name], ['性别', H.gender], ['年龄', H.age+'（'+H.lvl+'，年龄范围 '+H.ageRange+'）'],
+    ['搭档', H.partner], ['战役等级', H.lvl],
+    ['角色简介', H.bio],
+    [],
+    ['属性', '数值'],
+    ...HUMAN_STATS.map(s=>[s.name, H.stats[s.key]]),
+    [],
+    ['技能', '数值'],
+    ...HUMAN_STATS.flatMap(s=>s.skills.map(sk=>[sk.name, H.skills[sk.key]])),
+    [],
+    ['衍生属性', '数值'],
+    ['伤口格', H.derived.wound], ['速度/移动', H.derived.speed], ['精准池', H.derived.acc],
+    ['闪避池', H.derived.dodge], ['护甲', H.derived.armor], ['伤害', H.derived.dmg],
+    ['灵感上限', H.inspMax],
+    [],
+    ['折磨', '类型', '已划掉', '总格数', '描述'],
+    ...H.torments.map(t=>{ const tt=TORMENT_TYPES.find(x=>x.key===t.type); return [t.name, tt.name, t.crossed, tt.boxes, t.name]; }),
+    [],
+    ['面向'],
+    ['主要（+/-4）', H.aspectMajor, H.aspectMajorDesc],
+    ['次要（+/-2）', H.aspectMinor, H.aspectMinorDesc],
+    [],
+    ['特别指令', '类型'],
+    ...H.orders.map(o=>[o.name, o.type]),
+    [],
+    ['创建点', '数值'],
+    ['属性投入', H.attrSpent], ['技能投入', H.skillSpent], ['折磨划掉', H.tormentSpent],
+    ['剩余 CP', H.cpLeft]
+  ];
+
+  /* 数码兽 sheet */
+  const dRows = [
+    ['数码兽角色'],
+    ['名称', D.name], ['英文名', D.en], ['阶段', D.stage],
+    ['属性', D.attr], ['体型', D.size], ['领域', D.field], ['科属/类型', D.family],
+    [],
+    ['属性', '数值'],
+    ...DIGIMON_STATS.map(s=>[s.name, D.stats[s.key]]),
+    [],
+    ['衍生属性', '数值'],
+    ['伤口格', D.derived.wound], ['头脑', D.derived.brains], ['体能', D.derived.body], ['敏捷', D.derived.agility],
+    ['移动', D.derived.move], ['射程', D.derived.range], ['有效极限', D.derived.effLimit],
+    [],
+    ['特化值', '数值'],
+    ['BIT', D.derived.bit], ['CPU', D.derived.cpu], ['RAM', D.derived.ram],
+    [],
+    ['特质', 'DP', '等级', '类别', '描述'],
+    ...D.qualities.map(q=>[q.name, q.dp, q.rank, q.cat, q.desc]),
+    [],
+    ['攻击', '类型', '模式', '标签'],
+    ...D.attacks.map(a=>{
+      const fxmap = {}; QUALITIES.filter(q=>q.group==='effect').forEach(q=>fxmap['eff:'+q.id]=q.name);
+      const areamap = {}; RANGE_TAGS.forEach(r=>areamap['area:'+r.key]=r.name);
+      const tagmap = {charge:'[冲锋]',pierce:'[破甲]',certain:'[必中]',weapon:'[武器]',sig:'[招牌招式]',counter:'[反击]',mighty:'[强力一击]',full:'[完整动作]'};
+      return [a.name, a.kind==='melee'?'近战':'远程', a.mode==='damage'?'伤害':'支援',
+        a.tags.map(t=>tagmap[t]||fxmap[t]||areamap[t]||'').filter(Boolean).join(' ')];
+    }),
+    [],
+    ['数码点', '数值'],
+    ['属性投入', D.attrSpent], ['特质投入', D.qSpent], ['负面返还', D.negRefund], ['剩余 DP', D.dpLeft]
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const wsH = XLSX.utils.aoa_to_sheet(hRows);
+  const wsD = XLSX.utils.aoa_to_sheet(dRows);
+  XLSX.utils.book_append_sheet(wb, wsH, '人类角色');
+  XLSX.utils.book_append_sheet(wb, wsD, '数码兽');
+  const cols1 = [ {wch:18}, {wch:28}, {wch:14}, {wch:10}, {wch:40} ];
+  wsH['!cols'] = cols1; wsD['!cols'] = cols1;
+  XLSX.writeFile(wb, `DDA_角色卡_${H.name||'人类'}_${D.name||'数码兽'}.xlsx`);
+  expMsg('✓ Excel 已导出');
+}
+
+/* ============================================================
+ * 重置
+ * ============================================================ */
+function resetAll(){
+  if(!confirm('确定要清空当前所有角色数据吗？')) return;
+  S.human.stats = { agility:0, body:0, charisma:0, intelligence:0, willpower:0 };
+  S.human.skills = { dodge:0, fight:0, stealth:0, athletics:0, endurance:0, feats:0,
+                     manipulate:0, perform:0, persuasion:0, computer:0, survival:0, knowledge:0,
+                     perception:0, decipher:0, bravery:0 };
+  S.human.torments = [];
+  S.digimon.stage = 'rookie'; S.digimon.size = 'medium';
+  S.digimon.stats = { accuracy:0, damage:0, dodge:0, armor:0, health:0 };
+  S.digimon.qualities = {}; S.digimon.attacks = [];
+  ['h-name','h-gender','h-age','h-partner','h-bio','h-aspect-major','h-aspect-major-desc','h-aspect-minor','h-aspect-minor-desc',
+   'd-name','d-en','d-field','d-family'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+  renderHuman(); renderDigimon();
+}
+
+/* ============================================================
+ * 初始化
+ * ============================================================ */
+renderHuman();
+renderDigimon();
+</script>
+</body>
+</html>
