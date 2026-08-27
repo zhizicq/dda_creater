@@ -31,18 +31,9 @@
 
 > 推荐使用 Chrome / Edge 等现代浏览器。
 
-### 方式二：本地静态服务器（可选）
+### 方式二：直接网页打开
 
-```bash
-# Python 3
-python -m http.server 8000
-# 然后访问 http://localhost:8000
-```
-
-```bash
-# Node.js
-npx serve .
-```
+https://zhizicq.github.io/dda_creater/
 
 ---
 
@@ -87,7 +78,7 @@ npx serve .
 ## 📁 文件结构
 
 ```
-dda_chargen/
+/
 ├── index.html   # 主应用：界面 + 逻辑 + 导出（单文件）
 ├── data.js      # 规则数据：战役等级、属性、特质库、折磨、阶段、体型等
 └── README.md    # 本文件
