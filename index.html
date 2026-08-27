@@ -677,7 +677,7 @@ function renderHumanStats(){
     return `<div class="stat-block">
       <div class="stat-head">
         <b>${s.name}</b>
-        ${statStepperHtml('h','hStat',v,cap,'hStatStep')}
+        ${statStepperHtml('h', s.key, v, cap, 'hStatStep')}
       </div>
     </div>`;
   }).join('');
@@ -685,7 +685,8 @@ function renderHumanStats(){
 }
 function hStatStep(key, d){
   const cap = lvlInfo().cap;
-  const nv = S.human.stats[key] + d;
+  const cur = S.human.stats[key] || 0;
+  const nv = cur + d;
   if(nv<0 || nv>cap) return;
   S.human.stats[key] = nv;
   renderHuman();
@@ -702,7 +703,7 @@ function renderHumanSkills(){
           const v = S.human.skills[sk.key];
           return `<div class="skill">
             <span class="n">${sk.name}</span>
-            ${statStepperHtml('h','hSkill',v,cap,'hSkillStep')}
+            ${statStepperHtml('h', sk.key, v, cap, 'hSkillStep')}
           </div>`;
         }).join('')}
       </div>
@@ -712,7 +713,8 @@ function renderHumanSkills(){
 }
 function hSkillStep(key, d){
   const cap = lvlInfo().cap;
-  const nv = S.human.skills[key] + d;
+  const cur = S.human.skills[key] || 0;
+  const nv = cur + d;
   if(nv<0 || nv>cap) return;
   S.human.skills[key] = nv;
   renderHuman();
@@ -846,13 +848,14 @@ function renderDigimonStats(){
     return `<div class="stat-block">
       <div class="stat-head">
         <b>${s.name}</b>
-        ${statStepperHtml('d','dStat',v,99,'dStatStep')}
+        ${statStepperHtml('d', s.key, v, 99, 'dStatStep')}
       </div>
     </div>`;
   }).join('');
 }
 function dStatStep(key, d){
-  const nv = S.digimon.stats[key] + d;
+  const cur = S.digimon.stats[key] || 0;
+  const nv = cur + d;
   if(nv<0) return;
   S.digimon.stats[key] = nv;
   renderDigimon();
